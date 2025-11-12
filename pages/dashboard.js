@@ -10,6 +10,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [discovering, setDiscovering] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [manualConnect, setManualConnect] = useState(false)
+  const [manualIP, setManualIP] = useState('192.168.1.128')
+  const [tvName, setTvName] = useState('Minha TV TCL')
   const router = useRouter()
 
   useEffect(() => {
@@ -64,9 +67,39 @@ export default function Dashboard() {
     }
   }
 
+  const connectTVManually = async () => {
+    if (!user || !manualIP) return
+    
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/api/connect-tv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user.id,
+          tvIp: manualIP,
+          tvName: tvName
+        })
+      })
+      
+      const data = await response.json()
+      alert(data.message)
+      
+      if (data.success) {
+        loadTVs()
+        setManualConnect(false)
+        setMenuOpen(false)
+      }
+    } catch (error) {
+      alert('Erro na conexão manual')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendCommand = async (command) => {
     if (!selectedTV || !selectedTV.tv_ip) {
-      alert('TV não conectada! Clique em "Descobrir TV" primeiro.')
+      alert('TV não conectada! Use a busca automática ou conexão manual.')
       return
     }
 
@@ -130,8 +163,59 @@ export default function Dashboard() {
                 disabled={discovering}
                 style={styles.discoverButton}
               >
-                {discovering ? '🔍 Procurando...' : '🔍 Descobrir TV'}
+                {discovering ? '🔍 Procurando...' : '🔍 Busca Automática'}
               </button>
+
+              <button 
+                onClick={() => setManualConnect(!manualConnect)}
+                style={styles.manualButton}
+              >
+                {manualConnect ? '✖️ Cancelar' : '🔧 Conexão Manual'}
+              </button>
+
+              {/* Formulário de Conexão Manual */}
+              {manualConnect && (
+                <div style={styles.manualForm}>
+                  <h3 style={styles.manualTitle}>Conectar TV Manualmente</h3>
+                  
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Nome da TV</label>
+                    <input
+                      type="text"
+                      value={tvName}
+                      onChange={(e) => setTvName(e.target.value)}
+                      style={styles.input}
+                      placeholder="Ex: TV Sala, TV Quarto..."
+                    />
+                  </div>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>IP da TV</label>
+                    <input
+                      type="text"
+                      value={manualIP}
+                      onChange={(e) => setManualIP(e.target.value)}
+                      style={styles.input}
+                      placeholder="Ex: 192.168.1.100"
+                    />
+                  </div>
+
+                  <button 
+                    onClick={connectTVManually}
+                    disabled={loading || !manualIP}
+                    style={styles.connectButton}
+                  >
+                    {loading ? 'Conectando...' : '🔗 Conectar TV'}
+                  </button>
+
+                  <div style={styles.ipTips}>
+                    <p><strong>💡 Como descobrir o IP:</strong></p>
+                    <p>1. Na TV: Configurações → Rede</p>
+                    <p>2. Procure por "Status da Rede"</p>
+                    <p>3. Anote o "Endereço IP"</p>
+                  </div>
+                </div>
+              )}
 
               <div style={styles.tvList}>
                 {tvs.map(tv => (
@@ -183,7 +267,7 @@ export default function Dashboard() {
                   </p>
                   {!selectedTV.tv_ip && (
                     <p style={styles.warning}>
-                      ⚠️ Clique em "Descobrir TV" para conectar
+                      ⚠️ Use o menu para conectar a TV
                     </p>
                   )}
                 </div>
@@ -258,7 +342,7 @@ export default function Dashboard() {
               <div style={styles.noTV}>
                 <div style={styles.noTVIcon}>📺</div>
                 <h3 style={styles.noTVTitle}>Nenhuma TV selecionada</h3>
-                <p style={styles.noTVText}>Toque no menu ☰ para selecionar uma TV</p>
+                <p style={styles.noTVText}>Toque no menu ☰ para conectar uma TV</p>
                 <button 
                   onClick={() => setMenuOpen(true)}
                   style={styles.openMenuButton}
@@ -364,9 +448,72 @@ const styles = {
     border: 'none',
     padding: '12px',
     borderRadius: '10px',
+    marginBottom: '15px',
+    cursor: 'pointer',
+    fontSize: '14px'
+  },
+  manualButton: {
+    width: '100%',
+    background: '#fdcb6e',
+    color: 'white',
+    border: 'none',
+    padding: '12px',
+    borderRadius: '10px',
     marginBottom: '20px',
     cursor: 'pointer',
     fontSize: '14px'
+  },
+  manualForm: {
+    background: 'rgba(255,255,255,0.05)',
+    padding: '15px',
+    borderRadius: '10px',
+    marginBottom: '20px'
+  },
+  manualTitle: {
+    color: '#fdcb6e',
+    fontSize: '16px',
+    margin: '0 0 15px 0',
+    textAlign: 'center'
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '5px',
+    marginBottom: '15px'
+  },
+  label: {
+    color: 'white',
+    fontSize: '12px',
+    fontWeight: '500'
+  },
+  input: {
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #444',
+    background: 'rgba(255,255,255,0.1)',
+    color: 'white',
+    fontSize: '14px',
+    width: '100%',
+    boxSizing: 'border-box'
+  },
+  connectButton: {
+    width: '100%',
+    background: '#00b894',
+    color: 'white',
+    border: 'none',
+    padding: '12px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    marginBottom: '15px'
+  },
+  ipTips: {
+    background: 'rgba(0, 184, 148, 0.1)',
+    border: '1px solid #00b894',
+    borderRadius: '8px',
+    padding: '10px',
+    fontSize: '11px',
+    color: '#a4b0be'
   },
   tvList: {
     display: 'flex',
