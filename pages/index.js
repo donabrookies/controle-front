@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 
-// ✅ URL DO BACKEND NO RENDER
 const API_URL = 'https://smartcontrol-backend.onrender.com';
 
 export default function Login() {
@@ -102,7 +101,7 @@ const styles = {
   },
   card: {
     background: 'rgba(30, 30, 46, 0.9)',
-    padding: '40px',
+    padding: '30px 20px',
     borderRadius: '20px',
     border: '1px solid rgba(255,255,255,0.1)',
     width: '100%',
@@ -121,12 +120,14 @@ const styles = {
     color: 'white',
     fontSize: '28px',
     fontWeight: 'bold',
-    margin: 0
+    margin: 0,
+    textAlign: 'center'
   },
   subtitle: {
     color: '#a4b0be',
     textAlign: 'center',
-    marginBottom: '30px'
+    marginBottom: '30px',
+    fontSize: '14px'
   },
   form: {
     display: 'flex',
@@ -149,7 +150,9 @@ const styles = {
     border: '1px solid #444',
     background: 'rgba(255,255,255,0.1)',
     color: 'white',
-    fontSize: '16px'
+    fontSize: '16px',
+    width: '100%',
+    boxSizing: 'border-box'
   },
   button: {
     padding: '15px',
@@ -160,7 +163,8 @@ const styles = {
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    marginTop: '10px'
+    marginTop: '10px',
+    width: '100%'
   },
   error: {
     background: 'rgba(232, 67, 147, 0.2)',
@@ -168,7 +172,8 @@ const styles = {
     color: 'white',
     padding: '12px',
     borderRadius: '8px',
-    fontSize: '14px'
+    fontSize: '14px',
+    textAlign: 'center'
   },
   info: {
     marginTop: '20px',
