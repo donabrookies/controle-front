@@ -30,17 +30,47 @@ export default function Dashboard() {
     if (!user) return
     
     try {
+      console.log('🔄 Carregando TVs para usuário:', user.id);
+      
       const response = await fetch(`${API_URL}/api/user-tvs?user_id=${user.id}`)
       const data = await response.json()
       
+      console.log('📺 Resposta da API:', data);
+      
       if (data.success) {
         setTvs(data.tvs)
+        console.log('✅ TVs carregadas:', data.tvs);
+        
+        // 🎯 SEMPRE SELECIONAR A PRIMEIRA TV (SE EXISTIR)
         if (data.tvs.length > 0) {
           setSelectedTV(data.tvs[0])
+          console.log('🎯 TV selecionada:', data.tvs[0]);
+        } else {
+          // 🚨 SE NÃO HOUVER TV, CRIAR UMA FAKE PARA TESTE
+          console.log('⚠️ Nenhuma TV encontrada, criando TV fake para teste');
+          const fakeTV = {
+            id: 'fake-tv-id',
+            tv_name: 'TV de Teste',
+            tv_brand: 'roku',
+            tv_ip: '192.168.1.999',
+            user_id: user.id
+          };
+          setSelectedTV(fakeTV);
+          setTvs([fakeTV]);
         }
       }
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('❌ Erro ao carregar TVs:', error);
+      // 🚨 EM CASO DE ERRO, CRIAR TV FAKE
+      const fakeTV = {
+        id: 'fake-tv-error',
+        tv_name: 'TV de Teste (Erro)',
+        tv_brand: 'roku', 
+        tv_ip: '192.168.1.999',
+        user_id: user.id
+      };
+      setSelectedTV(fakeTV);
+      setTvs([fakeTV]);
     }
   }
 
@@ -107,6 +137,8 @@ export default function Dashboard() {
 
     setLoading(true)
     try {
+      console.log('🎮 ENVIANDO COMANDO:', command, '→', selectedTV.tv_ip);
+      
       const response = await fetch(`${API_URL}/api/send-command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,8 +150,10 @@ export default function Dashboard() {
       })
       
       const data = await response.json()
+      console.log('📡 RESPOSTA DO BACKEND:', data);
       alert(data.message)
     } catch (error) {
+      console.error('❌ ERRO AO ENVIAR COMANDO:', error);
       alert('Erro ao enviar comando')
     } finally {
       setLoading(false)
@@ -227,10 +261,8 @@ export default function Dashboard() {
                   </button>
 
                   <div style={styles.ipTips}>
-                    <p><strong>💡 Como descobrir o IP:</strong></p>
-                    <p>1. Na TV: Configurações → Rede</p>
-                    <p>2. Procure por "Status da Rede"</p>
-                    <p>3. Anote o "Endereço IP"</p>
+                    <p><strong>💡 Modo Teste:</strong> Use qualquer IP para testar!</p>
+                    <p>Ex: 192.168.1.999, 10.0.0.1, etc</p>
                   </div>
                 </div>
               )}
@@ -249,7 +281,7 @@ export default function Dashboard() {
                     }}
                   >
                     <h3 style={styles.tvName}>{tv.tv_name}</h3>
-                    <p style={styles.tvInfo}>{tv.tv_brand}</p>
+                    <p style={styles.tvInfo}>{tv.tv_brand} {tv.id.includes('fake') ? '(Teste)' : ''}</p>
                     <p style={styles.tvIp}>
                       {tv.tv_ip ? `IP: ${tv.tv_ip}` : 'Não conectada'}
                     </p>
@@ -275,103 +307,98 @@ export default function Dashboard() {
               {selectedTV ? `Controle - ${selectedTV.tv_name}` : 'Selecione uma TV'}
             </h2>
 
-            {selectedTV ? (
-              <div style={styles.remoteContainer}>
-                {/* Status da TV */}
-                <div style={styles.tvStatus}>
-                  <p style={styles.tvStatusText}>📺 {selectedTV.tv_name}</p>
-                  <p style={styles.tvStatusIp}>
-                    {selectedTV.tv_ip ? `IP: ${selectedTV.tv_ip}` : 'Não conectada'}
-                  </p>
-                  <p style={styles.tvStatusBrand}>
-                    Marca: {selectedTV.tv_brand}
-                  </p>
-                  {!selectedTV.tv_ip && (
-                    <p style={styles.warning}>
-                      ⚠️ Use o menu para conectar a TV
-                    </p>
-                  )}
+            {/* 🎯 SEMPRE MOSTRAR BOTÕES (MESMO SEM TV CONECTADA) */}
+            <div style={styles.remoteContainer}>
+              {/* Status da TV */}
+              <div style={styles.tvStatus}>
+                <p style={styles.tvStatusText}>
+                  📺 {selectedTV ? selectedTV.tv_name : 'TV de Teste'}
+                  {selectedTV?.id.includes('fake') && ' 🧪 (Modo Teste)'}
+                </p>
+                <p style={styles.tvStatusIp}>
+                  {selectedTV?.tv_ip ? `IP: ${selectedTV.tv_ip}` : 'IP: 192.168.1.999 (Teste)'}
+                </p>
+                <p style={styles.tvStatusBrand}>
+                  Marca: {selectedTV?.tv_brand || 'roku'}
+                </p>
+                <p style={styles.testWarning}>
+                  ⚠️ MODO TESTE - Comandos serão enviados mas TV não responderá
+                </p>
+              </div>
+
+              {/* Controle Remoto */}
+              <div style={styles.remote}>
+                {/* Linha 1 - Power e Volume */}
+                <div style={styles.buttonRow}>
+                  <button onClick={() => sendCommand('POWER')} style={styles.powerButton}>
+                    ⏻<br/><span style={styles.buttonLabel}>Power</span>
+                  </button>
+                  <button onClick={() => sendCommand('VOLUME_UP')} style={styles.volumeButton}>
+                    🔊<br/><span style={styles.buttonLabel}>Vol +</span>
+                  </button>
+                  <button onClick={() => sendCommand('VOLUME_DOWN')} style={styles.volumeButton}>
+                    🔉<br/><span style={styles.buttonLabel}>Vol -</span>
+                  </button>
+                  <button onClick={() => sendCommand('MUTE')} style={styles.muteButton}>
+                    🔇<br/><span style={styles.buttonLabel}>Mute</span>
+                  </button>
                 </div>
 
-                {/* Controle Remoto */}
-                <div style={styles.remote}>
-                  {/* Linha 1 - Power e Volume */}
-                  <div style={styles.buttonRow}>
-                    <button onClick={() => sendCommand('POWER')} style={styles.powerButton}>
-                      ⏻
+                {/* Navegação */}
+                <div style={styles.navSection}>
+                  <div style={styles.navRow}>
+                    <div style={styles.navSpace}></div>
+                    <button onClick={() => sendCommand('UP')} style={styles.navButton}>
+                      ↑<br/><span style={styles.buttonLabel}>Up</span>
                     </button>
-                    <button onClick={() => sendCommand('VOLUME_UP')} style={styles.volumeButton}>
-                      🔊
+                    <div style={styles.navSpace}></div>
+                  </div>
+                  <div style={styles.navRow}>
+                    <button onClick={() => sendCommand('LEFT')} style={styles.navButton}>
+                      ←<br/><span style={styles.buttonLabel}>Left</span>
                     </button>
-                    <button onClick={() => sendCommand('VOLUME_DOWN')} style={styles.volumeButton}>
-                      🔉
+                    <button onClick={() => sendCommand('ENTER')} style={styles.okButton}>
+                      OK<br/><span style={styles.buttonLabel}>Select</span>
                     </button>
-                    <button onClick={() => sendCommand('MUTE')} style={styles.muteButton}>
-                      🔇
+                    <button onClick={() => sendCommand('RIGHT')} style={styles.navButton}>
+                      →<br/><span style={styles.buttonLabel}>Right</span>
                     </button>
                   </div>
-
-                  {/* Navegação */}
-                  <div style={styles.navSection}>
-                    <div style={styles.navRow}>
-                      <div style={styles.navSpace}></div>
-                      <button onClick={() => sendCommand('UP')} style={styles.navButton}>
-                        ↑
-                      </button>
-                      <div style={styles.navSpace}></div>
-                    </div>
-                    <div style={styles.navRow}>
-                      <button onClick={() => sendCommand('LEFT')} style={styles.navButton}>
-                        ←
-                      </button>
-                      <button onClick={() => sendCommand('ENTER')} style={styles.okButton}>
-                        OK
-                      </button>
-                      <button onClick={() => sendCommand('RIGHT')} style={styles.navButton}>
-                        →
-                      </button>
-                    </div>
-                    <div style={styles.navRow}>
-                      <div style={styles.navSpace}></div>
-                      <button onClick={() => sendCommand('DOWN')} style={styles.navButton}>
-                        ↓
-                      </button>
-                      <div style={styles.navSpace}></div>
-                    </div>
-                  </div>
-
-                  {/* Botões de Função */}
-                  <div style={styles.functionRow}>
-                    <button onClick={() => sendCommand('HOME')} style={styles.functionButton}>
-                      🏠
+                  <div style={styles.navRow}>
+                    <div style={styles.navSpace}></div>
+                    <button onClick={() => sendCommand('DOWN')} style={styles.navButton}>
+                      ↓<br/><span style={styles.buttonLabel}>Down</span>
                     </button>
-                    <button onClick={() => sendCommand('BACK')} style={styles.functionButton}>
-                      ↩
-                    </button>
-                    <button onClick={() => sendCommand('MENU')} style={styles.functionButton}>
-                      ☰
-                    </button>
-                    <button onClick={() => sendCommand('SOURCE')} style={styles.functionButton}>
-                      📺
-                    </button>
+                    <div style={styles.navSpace}></div>
                   </div>
                 </div>
 
-                {loading && <p style={styles.loadingText}>Enviando comando...</p>}
+                {/* Botões de Função */}
+                <div style={styles.functionRow}>
+                  <button onClick={() => sendCommand('HOME')} style={styles.functionButton}>
+                    🏠<br/><span style={styles.buttonLabel}>Home</span>
+                  </button>
+                  <button onClick={() => sendCommand('BACK')} style={styles.functionButton}>
+                    ↩<br/><span style={styles.buttonLabel}>Back</span>
+                  </button>
+                  <button onClick={() => sendCommand('MENU')} style={styles.functionButton}>
+                    ☰<br/><span style={styles.buttonLabel}>Menu</span>
+                  </button>
+                  <button onClick={() => sendCommand('SOURCE')} style={styles.functionButton}>
+                    📺<br/><span style={styles.buttonLabel}>Source</span>
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div style={styles.noTV}>
-                <div style={styles.noTVIcon}>📺</div>
-                <h3 style={styles.noTVTitle}>Nenhuma TV selecionada</h3>
-                <p style={styles.noTVText}>Toque no menu ☰ para conectar uma TV</p>
-                <button 
-                  onClick={() => setMenuOpen(true)}
-                  style={styles.openMenuButton}
-                >
-                  Abrir Menu
-                </button>
+
+              {loading && <p style={styles.loadingText}>Enviando comando...</p>}
+              
+              <div style={styles.testInfo}>
+                <p><strong>🎯 MODO TESTE ATIVADO</strong></p>
+                <p>• Clique nos botões para testar</p>
+                <p>• Comandos aparecerão nos logs do Render</p>
+                <p>• Quando tiver uma TV real, use "Conexão Manual"</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -624,15 +651,16 @@ const styles = {
     fontSize: '14px'
   },
   tvStatusBrand: {
-    margin: 0,
+    margin: '0 0 10px 0',
     color: '#6c5ce7',
     fontSize: '12px',
     fontWeight: 'bold'
   },
-  warning: {
+  testWarning: {
     color: '#fdcb6e',
     margin: '10px 0 0 0',
-    fontSize: '12px'
+    fontSize: '12px',
+    fontStyle: 'italic'
   },
   remote: {
     background: 'rgba(255,255,255,0.05)',
@@ -649,31 +677,43 @@ const styles = {
     background: '#e84393',
     color: 'white',
     border: 'none',
-    padding: '20px',
+    padding: '15px 10px',
     borderRadius: '15px',
     fontSize: '20px',
     cursor: 'pointer',
-    minHeight: '60px'
+    minHeight: '80px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   volumeButton: {
     background: '#00cec9',
     color: 'white',
     border: 'none',
-    padding: '20px',
+    padding: '15px 10px',
     borderRadius: '15px',
     fontSize: '20px',
     cursor: 'pointer',
-    minHeight: '60px'
+    minHeight: '80px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   muteButton: {
     background: '#fdcb6e',
     color: 'white',
     border: 'none',
-    padding: '20px',
+    padding: '15px 10px',
     borderRadius: '15px',
     fontSize: '20px',
     cursor: 'pointer',
-    minHeight: '60px'
+    minHeight: '80px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   navSection: {
     marginBottom: '20px'
@@ -696,7 +736,11 @@ const styles = {
     height: '70px',
     borderRadius: '15px',
     fontSize: '20px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   okButton: {
     background: '#6c5ce7',
@@ -707,7 +751,11 @@ const styles = {
     borderRadius: '15px',
     fontSize: '16px',
     cursor: 'pointer',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   functionRow: {
     display: 'grid',
@@ -718,41 +766,34 @@ const styles = {
     background: 'rgba(255,255,255,0.1)',
     color: 'white',
     border: 'none',
-    padding: '15px',
+    padding: '15px 10px',
     borderRadius: '10px',
     fontSize: '16px',
     cursor: 'pointer',
-    minHeight: '50px'
+    minHeight: '70px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  buttonLabel: {
+    fontSize: '10px',
+    marginTop: '5px',
+    opacity: '0.8'
   },
   loadingText: {
     textAlign: 'center',
     color: '#a4b0be',
     margin: '20px 0 0 0'
   },
-  noTV: {
-    textAlign: 'center',
-    padding: '40px 20px'
-  },
-  noTVIcon: {
-    fontSize: '60px',
-    marginBottom: '20px'
-  },
-  noTVTitle: {
-    fontSize: '20px',
-    margin: '0 0 10px 0'
-  },
-  noTVText: {
-    color: '#a4b0be',
-    margin: '0 0 20px 0'
-  },
-  openMenuButton: {
-    background: '#6c5ce7',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
+  testInfo: {
+    background: 'rgba(108, 92, 231, 0.1)',
+    border: '1px solid #6c5ce7',
     borderRadius: '10px',
-    fontSize: '16px',
-    cursor: 'pointer'
+    padding: '15px',
+    marginTop: '20px',
+    textAlign: 'center',
+    fontSize: '12px'
   },
   loading: {
     display: 'flex',
