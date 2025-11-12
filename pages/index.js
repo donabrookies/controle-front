@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 
-// ✅ URL DO BACKEND - AUTOMÁTICA PARA DEPLOY
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// ✅ URL DO BACKEND NO RENDER
+const API_URL = 'https://smartcontrol-backend.onrender.com';
 
 export default function Login() {
   const [email, setEmail] = useState('teste@teste.com')
