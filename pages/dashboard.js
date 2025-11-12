@@ -12,7 +12,8 @@ export default function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [manualConnect, setManualConnect] = useState(false)
   const [manualIP, setManualIP] = useState('192.168.1.128')
-  const [tvName, setTvName] = useState('Minha TV TCL')
+  const [tvName, setTvName] = useState('Minha TV Roku')
+  const [tvBrand, setTvBrand] = useState('roku')
   const router = useRouter()
 
   useEffect(() => {
@@ -78,7 +79,8 @@ export default function Dashboard() {
         body: JSON.stringify({ 
           userId: user.id,
           tvIp: manualIP,
-          tvName: tvName
+          tvName: tvName,
+          tvBrand: tvBrand
         })
       })
       
@@ -110,7 +112,8 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           tvIp: selectedTV.tv_ip, 
-          command: command 
+          command: command,
+          tvBrand: selectedTV.tv_brand
         })
       })
       
@@ -190,6 +193,21 @@ export default function Dashboard() {
                   </div>
 
                   <div style={styles.inputGroup}>
+                    <label style={styles.label}>Marca da TV</label>
+                    <select
+                      value={tvBrand}
+                      onChange={(e) => setTvBrand(e.target.value)}
+                      style={styles.select}
+                    >
+                      <option value="roku">Roku</option>
+                      <option value="tcl">TCL</option>
+                      <option value="samsung">Samsung</option>
+                      <option value="lg">LG</option>
+                      <option value="generic">Outra</option>
+                    </select>
+                  </div>
+
+                  <div style={styles.inputGroup}>
                     <label style={styles.label}>IP da TV</label>
                     <input
                       type="text"
@@ -264,6 +282,9 @@ export default function Dashboard() {
                   <p style={styles.tvStatusText}>📺 {selectedTV.tv_name}</p>
                   <p style={styles.tvStatusIp}>
                     {selectedTV.tv_ip ? `IP: ${selectedTV.tv_ip}` : 'Não conectada'}
+                  </p>
+                  <p style={styles.tvStatusBrand}>
+                    Marca: {selectedTV.tv_brand}
                   </p>
                   {!selectedTV.tv_ip && (
                     <p style={styles.warning}>
@@ -496,6 +517,16 @@ const styles = {
     width: '100%',
     boxSizing: 'border-box'
   },
+  select: {
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #444',
+    background: 'rgba(255,255,255,0.1)',
+    color: 'white',
+    fontSize: '14px',
+    width: '100%',
+    boxSizing: 'border-box'
+  },
   connectButton: {
     width: '100%',
     background: '#00b894',
@@ -588,9 +619,15 @@ const styles = {
     fontWeight: 'bold'
   },
   tvStatusIp: {
-    margin: 0,
+    margin: '0 0 5px 0',
     color: '#a4b0be',
     fontSize: '14px'
+  },
+  tvStatusBrand: {
+    margin: 0,
+    color: '#6c5ce7',
+    fontSize: '12px',
+    fontWeight: 'bold'
   },
   warning: {
     color: '#fdcb6e',
